@@ -1,4 +1,7 @@
 require_relative 'student'
+require_relative 'teacher'
+require_relative 'course'
+require_relative 'subject'
 
 def main_loop
   loop do

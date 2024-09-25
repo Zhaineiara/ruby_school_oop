@@ -51,6 +51,10 @@ class Course
     exit_management
   end
 
+  def self.all_records
+    @@record.reject { |course| course[:delete_at] }
+  end
+
   def self.find
     clear_screen
     puts "SEARCH COURSE"

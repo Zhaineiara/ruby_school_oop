@@ -1,15 +1,16 @@
 class Student
-  attr_accessor :id, :name, :birth_date, :email, :phone_number, :delete_at
+  attr_accessor :id, :name, :birth_date, :email, :phone_number, :course_id, :delete_at
   @@record = []
   @@next_id = 1
 
-  def initialize(name, birth_date, email, phone_number, delete_at = nil)
+  def initialize(name, birth_date, email, phone_number, course_id = nil, delete_at = nil)
     @id = @@next_id
     @@next_id += 1
     @name = name
     @birth_date = birth_date
     @email = email
     @phone_number = phone_number
+    @course_id = course_id
     @delete_at = delete_at
   end
 
@@ -21,8 +22,9 @@ class Student
       user_existence[:birth_date] = @birth_date
       user_existence[:email] = @email
       user_existence[:phone_number] = @phone_number
+      user_existence[:course_id] = @course_id
     else
-      @@record.append({ id: @id, name: @name, birth_date: @birth_date, email: @email, phone_number: @phone_number, delete_at: @delete_at })
+      @@record.append({ id: @id, name: @name, birth_date: @birth_date, email: @email, phone_number: @phone_number, course_id: @course_id, delete_at: @delete_at })
     end
   end
 
@@ -36,7 +38,13 @@ class Student
   end
 
   def display
-    puts "Id: #{@id}\nName: #{@name}\nBirth Date: #{@birth_date}\nEmail: #{@email}\nPhone: #{@phone_number}"
+    course_name = Student.find_course_name(@course_id)
+    puts "Id: #{@id}\nName: #{@name}\nBirth Date: #{@birth_date}\nEmail: #{@email}\nPhone: #{@phone_number}\nCourse: #{course_name}"
+  end
+
+  def self.find_course_name(course_id)
+    course = Course.all_records.find { |c| c[:id] == course_id }
+    course ? course[:name] : "Not Assigned"
   end
 
   def self.all
@@ -49,7 +57,8 @@ class Student
         if user[:delete_at]
           puts "\nStudent Record #{index_number + 1} is marked as deleted (Deleted at: #{user[:delete_at]})"
         else
-          puts "\nStudent Record #{index_number + 1}\nStudent_id: #{user[:id]}\nName: #{user[:name]}\nBirthday: #{user[:birth_date]}\nEmail: #{user[:email]}\nPhone Number: #{user[:phone_number]}"
+          course_name = find_course_name(user[:course_id])
+          puts "\nStudent Record #{index_number + 1}\nStudent_id: #{user[:id]}\nName: #{user[:name]}\nBirthday: #{user[:birth_date]}\nEmail: #{user[:email]}\nPhone Number: #{user[:phone_number]}\nCourse: #{course_name}"
         end
       end
     end
@@ -76,10 +85,12 @@ class Student
     else
       clear_screen
       puts "DATA IN THE GIVEN ID"
+      course_name = find_course_name(user_existence[:course_id])
       puts "Name: #{user_existence[:name]}"
       puts "Birthday: #{user_existence[:birth_date]}"
       puts "Email: #{user_existence[:email]}"
       puts "Phone: #{user_existence[:phone_number]}"
+      puts "Course: #{course_name}"
     end
 
     print("\n")
@@ -104,10 +115,12 @@ class Student
     else
       clear_screen
       puts "DATA IN THE GIVEN EMAIL"
+      course_name = find_course_name(user_existence[:course_id])
       puts "Name: #{user_existence[:name]}"
       puts "Birthday: #{user_existence[:birth_date]}"
       puts "Email: #{user_existence[:email]}"
       puts "Phone: #{user_existence[:phone_number]}"
+      puts "Course: #{course_name}"
     end
 
     print("\n")
@@ -126,7 +139,21 @@ class Student
     @email = gets.chomp
     print "Enter phone:"
     @phone_number = gets.chomp
-    user = Student.new(@name, @birth_date, @email, @phone_number)
+
+    # Display available courses
+    puts "\nAvailable Courses:"
+    if Course.all_records.empty?
+      puts "No courses available."
+    else
+      Course.all_records.each do |course|
+        puts "Course ID: #{course[:id]} - Course Name: #{course[:name]}"
+      end
+    end
+
+    print "Enter course ID: "
+    @course_id = gets.chomp.to_i
+
+    user = Student.new(@name, @birth_date, @email, @phone_number, @course_id)
     user.save
 
     clear_screen
@@ -170,7 +197,7 @@ class Student
   def self.edit
     clear_screen
     puts "EDIT DETAILS"
-    print "Enter the ID:"
+    print "Enter the ID: "
     @id = gets.chomp.to_i
 
     find_record = @@record.find { |user| user[:id] == @id }
@@ -184,18 +211,37 @@ class Student
 
     clear_screen
     puts "EDITING RECORD OF #{(find_record[:name].upcase)}"
+
     print "Enter new name:"
     new_name = gets.chomp
     find_record[:name] = new_name unless new_name.empty?
+
     print "Enter new birth date:"
     new_birth_date = gets.chomp
     find_record[:birth_date] = new_birth_date unless new_birth_date.empty?
+
     print "Enter new email:"
     new_email = gets.chomp
     find_record[:email] = new_email unless new_email.empty?
+
     print "Enter new phone number:"
     new_phone = gets.chomp
     find_record[:phone_number] = new_phone unless new_phone.empty?
+
+    puts "\nAvailable Courses:"
+    if Course.all_records.empty?
+      puts "No courses available."
+    else
+      Course.all_records.each do |course|
+        puts "Course ID: #{course[:id]} - Course Name: #{course[:name]}"
+      end
+    end
+
+    print "Enter new course ID (leave blank to keep current): "
+    new_course_id = gets.chomp
+    if !new_course_id.empty?
+      find_record[:course_id] = new_course_id.to_i
+    end
 
     puts "\nStudent updated successfully!"
     exit_management
